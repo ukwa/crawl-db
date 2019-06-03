@@ -49,6 +49,7 @@ class SendLogFileToCrawlDB(luigi.contrib.hadoop.JobTask):
     cdb_password = luigi.Parameter(default=None)
     cdb_port = luigi.IntParameter(default=26257)
     cdb_host = luigi.Parameter(default='localhost')
+    batch_size = luigi.IntParameter(default=1000)
 
     # This can be set to 1 if there is intended to be one output file. The usual Luigi default is 25.
     # Using one output file ensures the whole output is sorted but is not suitable for very large crawls.
@@ -94,13 +95,16 @@ class SendLogFileToCrawlDB(luigi.contrib.hadoop.JobTask):
     def run_mapper(self, stdin=sys.stdin, stdout=sys.stdout):
         """
         Run the mapper on the hadoop node.
+
+        UKWA: In this case, we modify the mapper behaviour to make efficient, batched SQL inserts possible.
         """
         self.init_hadoop()
         self.init_mapper()
         execute_values(
             self.cur,
             """UPSERT INTO crawl_log (url, timestamp, content_type, content_length, content_digest, via, hop_path, status_code, host, ip ) VALUES %s""",
-            self._map_input((line[:-1] for line in stdin))
+            self._map_input((line[:-1] for line in stdin)),
+            page_size=self.batch_size
         )
         outputs = []
         if self.reducer == NotImplemented:
