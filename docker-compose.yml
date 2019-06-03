@@ -1,0 +1,20 @@
+version: '2'
+
+services:
+
+  crdb:
+    image: cockroachdb/cockroach:v19.1.1
+    command: start --insecure
+    ports:
+      - "8080:8080"
+      - "26257:26257"
+
+  dbmate:
+    image: amacneil/dbmate
+    command: up
+    environment:
+      - "DATABASE_URL=postgres://root@crdb:26257/defaultdb?sslmode=disable"
+    volumes:
+      - ./db:/db
+    restart: on-failure
+
