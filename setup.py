@@ -18,6 +18,7 @@ setup(
     include_package_data=True,
     license='Apache 2.0',
     long_description=open('README.md').read(),
+    zip_safe = False, # Avoid installing as .egg file, as Luigi can't handle these.
     entry_points={
         'console_scripts': [
             'crawldb=crawldb.cli:main'

@@ -1,7 +1,9 @@
+import sys
 import logging
 import crawldb
 from crawldb.heritrix import CrawlLogLine
 import psycopg2
+from psycopg2.extras import execute_values
 import luigi
 import luigi.contrib.hdfs
 import luigi.contrib.hadoop
@@ -89,17 +91,27 @@ class SendLogFileToCrawlDB(luigi.contrib.hadoop.JobTask):
         # Open a cursor to perform database operations.
         self.cur = self.conn.cursor()
 
+    def run_mapper(self, stdin=sys.stdin, stdout=sys.stdout):
+        """
+        Run the mapper on the hadoop node.
+        """
+        self.init_hadoop()
+        self.init_mapper()
+        execute_values(
+            self.cur,
+            """UPSERT INTO crawl_log (url, timestamp, content_type, content_length, content_digest, via, hop_path, status_code, host, ip ) VALUES %s""",
+            self._map_input((line[:-1] for line in stdin))
+        )
+        outputs = []
+        if self.reducer == NotImplemented:
+            self.writer(outputs, stdout)
+        else:
+            self.internal_writer(outputs, stdout)
+
     def mapper(self, line):
         # Parse:
         c = CrawlLogLine(line)
-        try:
-            self.cur.execute(
-                """UPSERT INTO crawl_log (url, timestamp, content_type, content_length, content_digest, via, hop_path, status_code, host, ip ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
-                (c.url, c.timestamp, c.mime, c.content_length, c.hash, c.via, c.hop_path, c.status_code, c.host, c.ip))
-            yield "SUCCESS", 1
-        except Exception as e:
-            logger.exception("Problem parsing: %s", line)
-            yield "ERROR", line
+        yield (c.url, c.timestamp, c.mime, c.content_length, c.hash, c.via, c.hop_path, c.status_code, c.host, c.ip)
 
     def reducer(self, key, values):
         """
@@ -109,21 +121,13 @@ class SendLogFileToCrawlDB(luigi.contrib.hadoop.JobTask):
         :param values:
         :return:
         """
-        # Just pass errors through:
-        if key.startswith("ERROR"):
-            for value in values:
-                yield key, value
-        else:
-            # Sum totals by key:
-            sum = 0
-            for value in values:
-                sum += value
-                # yield key, value to emit errors
-            yield key, sum
+        # Just pass through:
+        for value in values:
+            yield key, value
 
 
 if __name__ == '__main__':
-    luigi.run(['analyse.SendLogFileToCrawlDB', '--log-paths', '[ "/Users/andy/Documents/workspace//wren/compose-dev-crawler/output/logs/frequent/crawl.log.20160331160522" ]',
+    luigi.run(['analyse.SendLogFileToCrawlDB', '--log-paths', '[ "/Users/andy/Documents/workspace/wren/compose-dev-crawler/output/logs/frequent/crawl.log.20160331160522" ]',
                '--local-scheduler'])
 
     #luigi.run(['analyse.SummariseLogFiles', '--cdb-host', 'bigcdx',
