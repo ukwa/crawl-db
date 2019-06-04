@@ -2,6 +2,7 @@ import sys
 import logging
 import argparse
 import psycopg2
+from psycopg2.extras import execute_values
 from crawldb.heritrix import CrawlLogLine
 
 # Set up a logging handler:
@@ -20,18 +21,24 @@ logging.root.setLevel(logging.WARNING)
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
+
+def value_generator(f):
+    for line in f:
+        c = CrawlLogLine(line)
+        yield (c.url, c.timestamp, c.mime, c.content_length, c.hash, c.via, c.hop_path, c.status_code, c.host, c.ip)
+
+
 def import_crawl_log(args, cur):
     # Now read the file and push to the Crawl DB
     # : url, timestamp, content_type, content_length, content_digest, via, hop_path, hop, source, start_timestamp, duration, status_code, warc_filename, warc_record_offset, warc_record_length, extra_info, host, ip, geocode, virus, crawl_name)
     with open(args.filename, 'r') as f:
-        for line in f:
-            c = CrawlLogLine(line)
-            try:
-                cur.execute("""UPSERT INTO crawl_log (url, timestamp, content_type, content_length, content_digest, via, hop_path, status_code, host, ip ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
-                        (c.url, c.timestamp, c.mime, c.content_length, c.hash, c.via, c.hop_path, c.status_code, c.host, c.ip))
-            except Exception as e:
-                logger.exception("Problem parsing: %s", line)
-                break
+        # Use batch insertion helper:
+        execute_values(
+            cur,
+            """UPSERT INTO crawl_log (url, timestamp, content_type, content_length, content_digest, via, hop_path, status_code, host, ip ) VALUES %s""",
+            value_generator(f),
+            page_size=1000
+        )
 
 
 def query(args, cur):
