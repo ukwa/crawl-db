@@ -73,6 +73,13 @@ class SendLogFileToCrawlDB(luigi.contrib.hadoop.JobTask):
         else:
             return luigi.LocalTarget(path=out_name)
 
+    def jobconfs(self):
+        jcs = super(SendLogFileToCrawlDB, self).jobconfs()
+        # Avoid speculative execution
+        jcs.append('mapreduce.map.speculative=false')
+        jcs.append('mapreduce.reduce.speculative=false')
+        return jcs
+
     def extra_modules(self):
         return [crawldb,psycopg2,dateutil,six]
 
