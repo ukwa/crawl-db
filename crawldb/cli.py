@@ -23,9 +23,13 @@ logger.setLevel(logging.INFO)
 
 
 def value_generator(f):
+    count = 0
     for line in f:
         c = CrawlLogLine(line)
         yield c.upsert_values()
+        count += 1
+        if count%1000 == 0:
+            logger.info("Sent %s..." % count )
 
 
 def import_crawl_log(args, cur):
@@ -43,12 +47,15 @@ def import_crawl_log(args, cur):
 
 def query(args, cur):
     # Example query:
-    cur.execute("""
-        SELECT host, date_trunc('hour', timestamp), SUM(content_length) 
-        FROM crawl_log 
-        WHERE timestamp > '2016-03-31 15:00:00' AND timestamp < '2016-03-31 16:00:00' 
-        GROUP BY host, date_trunc('hour', timestamp)
-        """)
+    #cur.execute("""SELECT COUNT(*) FROM crawl_log;""");
+    cur.execute("""SELECT * FROM crawl_log WHERE hop_path = '-' AND ( status_code < 200 OR status_code > 399)""")
+    #cur.execute("""
+    #    SELECT host, date_trunc('day', timestamp), status_code, COUNT(status_code) 
+    #    FROM crawl_log 
+    #    GROUP BY host, status_code, date_trunc('day', timestamp)
+    #    """)
+    #    WHERE timestamp > '2017-06-09 04:00:00' AND timestamp < '2017-06-09 05:00:00'
+
     #rows = cur.fetchall()
     # Returns:
     #for row in rows:
@@ -76,11 +83,11 @@ def main(argv=None):
 
     # Connect to the "bank" database.
     conn = psycopg2.connect(
-        database='defaultdb',
+        database='crawl_db',
         user='root',
         sslmode='disable',
         port=26257,
-        host='localhost',
+        host='192.168.45.21',
     )
 
     # Make each statement commit immediately.

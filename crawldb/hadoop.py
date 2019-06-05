@@ -7,9 +7,9 @@ from psycopg2.extras import execute_values
 import luigi
 import luigi.contrib.hdfs
 import luigi.contrib.hadoop
-import dateutil
-import six
 from luigi.contrib.hdfs.format import Plain, PlainDir
+
+import dateutil, six, idna, urlcanon, urllib3, certifi, chardet, requests, requests_file, tldextract
 
 logger = logging.getLogger(__name__)
 
@@ -74,7 +74,7 @@ class SendLogFileToCrawlDB(luigi.contrib.hadoop.JobTask):
             return luigi.LocalTarget(path=out_name)
 
     def extra_modules(self):
-        return [crawldb,psycopg2,dateutil,six]
+        return [crawldb,psycopg2,dateutil,six,idna,urlcanon,urllib3,certifi,chardet,requests,requests_file,tldextract]
 
     def init_mapper(self):
         # Set up DB connection...
