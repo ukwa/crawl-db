@@ -102,7 +102,7 @@ class SendLogFileToCrawlDB(luigi.contrib.hadoop.JobTask):
         self.init_mapper()
         execute_values(
             self.cur,
-            """UPSERT INTO crawl_log (url, timestamp, content_type, content_length, content_digest, via, hop_path, status_code, host, ip ) VALUES %s""",
+            CrawlLogLine.upsert_sql,
             self._map_input((line[:-1] for line in stdin)),
             page_size=self.batch_size
         )
@@ -115,7 +115,7 @@ class SendLogFileToCrawlDB(luigi.contrib.hadoop.JobTask):
     def mapper(self, line):
         # Parse:
         c = CrawlLogLine(line)
-        yield (c.url, c.timestamp, c.mime, c.content_length, c.hash, c.via, c.hop_path, c.status_code, c.host, c.ip)
+        yield c.upsert_values()
 
     def reducer(self, key, values):
         """

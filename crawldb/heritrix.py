@@ -1,5 +1,6 @@
 import re
-from urllib.parse import urlparse
+import urlcanon
+import tldextract
 
 
 class CrawlLogLine(object):
@@ -32,15 +33,23 @@ class CrawlLogLine(object):
         if self.content_length == "-":
             self.content_length = None
 
+        # Parse URL:
+        parsed_url = urlcanon.parse_url(self.url)
+        # Canonicalise
+        urlcanon.whatwg(parsed_url)
+
         # and results:
+        self.ssurt = parsed_url.ssurt().decode('utf-8')
+        self.host = parsed_url.host.decode('utf-8')
+        # Pull the registered domain:
+        ext = tldextract.extract(self.host)
+        self.domain = ext.registered_domain
         self.ip = None
         self.tries = None
         self.hop = ''
-        # Host
+        # Host: DNS override
         if self.url.startswith("dns:"):
             self.host = self.url[4:]
-        else:
-            self.host = urlparse(self.url).hostname
 
         # Stats block
         self.stats = {
@@ -76,3 +85,8 @@ class CrawlLogLine(object):
         :return:
         """
         return self.stats
+
+    upsert_sql = """UPSERT INTO crawl_log (ssurt, timestamp, url, host, domain, content_type, content_length, content_digest, via, hop_path, status_code, ip ) VALUES %s"""
+
+    def upsert_values(self):
+        return (self.ssurt, self.timestamp, self.url, self.host, self.domain, self.mime, self.content_length, self.hash, self.via, self.hop_path, self.status_code, self.ip)

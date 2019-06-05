@@ -25,7 +25,7 @@ logger.setLevel(logging.INFO)
 def value_generator(f):
     for line in f:
         c = CrawlLogLine(line)
-        yield (c.url, c.timestamp, c.mime, c.content_length, c.hash, c.via, c.hop_path, c.status_code, c.host, c.ip)
+        yield c.upsert_values()
 
 
 def import_crawl_log(args, cur):
@@ -35,7 +35,7 @@ def import_crawl_log(args, cur):
         # Use batch insertion helper:
         execute_values(
             cur,
-            """UPSERT INTO crawl_log (url, timestamp, content_type, content_length, content_digest, via, hop_path, status_code, host, ip ) VALUES %s""",
+            CrawlLogLine.upsert_sql,
             value_generator(f),
             page_size=1000
         )
