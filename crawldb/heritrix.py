@@ -2,6 +2,9 @@ import re
 import urlcanon
 import tldextract
 
+# Use a TLD extractor that down not download a new suffix list (uses embedded one)
+no_fetch_extract = tldextract.TLDExtract(suffix_list_urls=None)
+
 
 class CrawlLogLine(object):
     """
@@ -42,7 +45,7 @@ class CrawlLogLine(object):
         self.ssurt = parsed_url.ssurt().decode('utf-8')
         self.host = parsed_url.host.decode('utf-8')
         # Pull the registered domain:
-        ext = tldextract.extract(self.host)
+        ext = no_fetch_extract(self.host)
         self.domain = ext.registered_domain
         self.ip = None
         self.tries = None
