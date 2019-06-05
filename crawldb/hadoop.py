@@ -76,6 +76,9 @@ class SendLogFileToCrawlDB(luigi.contrib.hadoop.JobTask):
     def extra_modules(self):
         return [crawldb,psycopg2,dateutil,six]
 
+    def extra_files(self):
+        return ['_tld_extract_cache']
+
     def init_mapper(self):
         # Set up DB connection...
         self.conn = psycopg2.connect(
