@@ -23,9 +23,11 @@ logger.setLevel(logging.INFO)
 
 
 def value_generator(f):
+    line_counter = 0
     for line in f:
         c = CrawlLogLine(line)
-        yield c.upsert_values()
+        line_counter += 1
+        yield c.upsert_values(line_counter)
 
 
 def import_crawl_log(args, cur):

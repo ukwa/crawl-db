@@ -89,7 +89,7 @@ class CrawlLogLine(object):
         """
         return self.stats
 
-    upsert_sql = """UPSERT INTO crawl_log (ssurt, timestamp, url, host, domain, content_type, content_length, content_digest, via, hop_path, status_code, ip ) VALUES %s"""
+    upsert_sql = """UPSERT INTO crawl_log (ssurt, timestamp, event_id, url, host, domain, content_type, content_length, content_digest, via, hop_path, status_code, ip ) VALUES %s"""
 
-    def upsert_values(self):
-        return (self.ssurt, self.timestamp, self.url, self.host, self.domain, self.mime, self.content_length, self.hash, self.via, self.hop_path, self.status_code, self.ip)
+    def upsert_values(self, event_id):
+        return (self.ssurt, self.timestamp, event_id, self.url, self.host, self.domain, self.mime, self.content_length, self.hash, self.via, self.hop_path, self.status_code, self.ip)

@@ -55,6 +55,9 @@ class SendLogFileToCrawlDB(luigi.contrib.hadoop.JobTask):
     # Using one output file ensures the whole output is sorted but is not suitable for very large crawls.
     n_reduce_tasks = luigi.IntParameter(default=1)
 
+    # Line counter used to ID events:
+    line_counter = 0
+
     # DB connection:
     conn = None
     cur = None
@@ -125,7 +128,8 @@ class SendLogFileToCrawlDB(luigi.contrib.hadoop.JobTask):
     def mapper(self, line):
         # Parse:
         c = CrawlLogLine(line)
-        yield c.upsert_values()
+        self.line_counter += 1
+        yield c.upsert_values(self.line_counter)
 
     def reducer(self, key, values):
         """
