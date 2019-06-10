@@ -1,4 +1,5 @@
 -- migrate:up
+
 CREATE TABLE crawl_log (
   ssurt TEXT,
   timestamp TIMESTAMP,
@@ -46,11 +47,12 @@ CREATE TABLE crawl_launches (
 );
 -- Add indexes to ensure we can filter by time, crawl_stream ('selective', 'domain', 'frequent') and job:
 CREATE INDEX ON crawl_launches (timestamp);
-CREATE INDEX ON crawl_launches (crawl_stream);
-CREATE INDEX ON crawl_launches (crawl_job_name);
+CREATE INDEX ON crawl_launches (job_name);
+CREATE INDEX ON crawl_launches (stream);
 
 
 -- migrate:down
+
 drop table crawl_log;
 
 drop table crawl_launches;
