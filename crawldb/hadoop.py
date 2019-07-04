@@ -80,10 +80,15 @@ class SendLogFileToCrawlDB(luigi.contrib.hadoop.JobTask):
             return luigi.LocalTarget(path=out_name)
 
     def jobconfs(self):
+        # Configure to avoid speculative execution...
         jcs = super(SendLogFileToCrawlDB, self).jobconfs()
-        # Avoid speculative execution
+        # Newer syntax:
         jcs.append('mapreduce.map.speculative=false')
         jcs.append('mapreduce.reduce.speculative=false')
+        # Older syntax (e.g. 0.20.x)
+        jcs.append('mapred.map.tasks.speculative.execution=false')
+        jcs.append('mapred.reduce.tasks.speculative.execution=false')
+
         return jcs
 
     def extra_modules(self):
@@ -120,7 +125,7 @@ class SendLogFileToCrawlDB(luigi.contrib.hadoop.JobTask):
         logger.warning("Initialising...")
         self.init_hadoop()
         self.init_mapper()
-        logger.warning("Initialised. Now launching to execute_values...")
+        logger.warning("Initialised. Now starting execute_values batch submission...")
         execute_values(
             self.cur,
             CrawlLogLine.upsert_sql,
