@@ -137,8 +137,7 @@ class SendLogFileToCrawlDB(luigi.contrib.hadoop.JobTask):
         counter = 0
         for result in self._map_input((line[:-1] for line in stdin)):
             if counter%1000 == 0:
-                logger.warning( "Processed %i lines" % counter )
-                outputs = [("STATUS", "Processed %i lines" % counter)]
+                outputs = [("STATUS", "Emitted %i lines" % counter)]
                 if self.reducer == NotImplemented:
                     self.writer(outputs, stdout)
                 else:
@@ -146,11 +145,9 @@ class SendLogFileToCrawlDB(luigi.contrib.hadoop.JobTask):
             counter += 1
             yield result
 
-
     def mapper(self, line):
         # Parse:
         c = CrawlLogLine(line)
-        self.line_counter += 1
 
         # Yield this line if there seems there is no key collision with the previous line:
         if self.last_c and c.ssurt == self.last_c.ssurt and c.timestamp == self.last_c.timestamp:
@@ -159,6 +156,11 @@ class SendLogFileToCrawlDB(luigi.contrib.hadoop.JobTask):
             logger.warning("Curr line %s" % c.line)
         else:
             yield c.upsert_values()
+
+        # Report on progress:
+        if self.line_counter % 1000 == 0:
+            logger.warning("Processed %i lines..." % self.line_counter)
+        self.line_counter += 1
 
         # Remember this line as the last line:
         self.last_c = c
