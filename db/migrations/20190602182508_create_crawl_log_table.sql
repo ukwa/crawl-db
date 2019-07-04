@@ -34,6 +34,7 @@ CREATE INDEX ON crawl_log (timestamp);
 -- Note that adding more indexes to this very detailed table is not recommended for large datasets.
 -- Similarly, avoid replicating this table, to keep space utilisation reasonable:
 ALTER TABLE crawl_log CONFIGURE ZONE USING num_replicas = 1;
+-- TODO Requires an additional contraint to keep it on one large-capacity machine (more setup required for that).
 
 
 -- Create an additional table to record every launch event.

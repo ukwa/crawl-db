@@ -58,6 +58,9 @@ class SendLogFileToCrawlDB(luigi.contrib.hadoop.JobTask):
     # Line counter used to ID events:
     line_counter = 0
 
+    # Storing the pervious line (to catch key collisions)
+    last_c = None
+
     # DB connection:
     conn = None
     cur = None
@@ -129,7 +132,17 @@ class SendLogFileToCrawlDB(luigi.contrib.hadoop.JobTask):
         # Parse:
         c = CrawlLogLine(line)
         self.line_counter += 1
-        yield c.upsert_values(self.line_counter)
+
+        # Yield this line if there seems there is no key collision with the previous line:
+        if self.last_c and c.ssurt == self.last_c.ssurt and c.timestamp == self.last_c.timestamp:
+            logger.warning("Skipping line %i because the last line appears to collide with this one.")
+            logger.warning("Prev line %s" % self.last_c.line)
+            logger.warning("Curr line %s" % c.line)
+        else:
+            yield c.upsert_values(self.line_counter)
+
+        # Remember this line as the last line:
+        self.last_c = c
 
     def reducer(self, key, values):
         """

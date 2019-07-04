@@ -20,6 +20,9 @@ class CrawlLogLine(object):
         Parse from a standard log-line.
         :param line:
         """
+        # Store the line for reference
+        self.line = line
+        # Split the line up:
         (self.timestamp, self.status_code, self.content_length, self.url, self.hop_path, self.via,
             self.mime, self.thread, self.start_time_plus_duration, self.hash, self.source,
             self.annotation_string) = re.split(" +", line.strip(), maxsplit=11)
