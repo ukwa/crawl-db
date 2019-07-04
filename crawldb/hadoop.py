@@ -44,7 +44,7 @@ class SendLogFileToCrawlDB(luigi.contrib.hadoop.JobTask):
     task_namespace = 'analyse'
     log_paths = luigi.ListParameter()
     from_hdfs = luigi.BoolParameter(default=False)
-    cdb_db = luigi.Parameter(default='defaultdb')
+    cdb_db = luigi.Parameter(default='crawl_db')
     cdb_user = luigi.Parameter(default='root')
     cdb_password = luigi.Parameter(default=None)
     cdb_port = luigi.IntParameter(default=26257)
@@ -119,14 +119,22 @@ class SendLogFileToCrawlDB(luigi.contrib.hadoop.JobTask):
         execute_values(
             self.cur,
             CrawlLogLine.upsert_sql,
-            self._map_input((line[:-1] for line in stdin)),
+            self._map_input_reporter(stdin, stdout),
             page_size=self.batch_size
         )
-        outputs = []
-        if self.reducer == NotImplemented:
-            self.writer(outputs, stdout)
-        else:
-            self.internal_writer(outputs, stdout)
+
+    def _map_input_reporter(self, stdin, stdout):
+        counter = 0
+        for result in self._map_input((line[:-1] for line in stdin)):
+            if counter%1000 == 0:
+                outputs = [("STATUS", "Processed %i lines" % counter)]
+                if self.reducer == NotImplemented:
+                    self.writer(outputs, stdout)
+                else:
+                    self.internal_writer(outputs, stdout)
+            counter += 1
+            yield result
+
 
     def mapper(self, line):
         # Parse:

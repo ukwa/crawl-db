@@ -3,7 +3,6 @@
 CREATE TABLE crawl_log (
   ssurt TEXT,
   timestamp TIMESTAMP,
-  event_id BIGINT, -- This is a simple numeric ID used to ensure events that happen at exactly the same time can be distinguished
   url TEXT,
   host TEXT,
   domain TEXT,
@@ -27,7 +26,7 @@ CREATE TABLE crawl_log (
   job_name TEXT,
   job_launch TIMESTAMP,
   log_filename TEXT,
-  PRIMARY KEY (ssurt, timestamp, event_id)
+  PRIMARY KEY (ssurt, timestamp)
 );
 -- Add an index to ensure we can filter by date range:
 CREATE INDEX ON crawl_log (timestamp);
