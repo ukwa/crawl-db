@@ -1,3 +1,4 @@
+import os
 import sys
 import logging
 import crawldb
@@ -42,6 +43,7 @@ class SendLogFileToCrawlDB(luigi.contrib.hadoop.JobTask):
     """
 
     task_namespace = 'analyse'
+    crawl_job_name = luigi.Parameter(default='frequent')
     log_paths = luigi.ListParameter()
     from_hdfs = luigi.BoolParameter(default=False)
     cdb_db = luigi.Parameter(default='crawl_db')
@@ -147,7 +149,7 @@ class SendLogFileToCrawlDB(luigi.contrib.hadoop.JobTask):
 
     def mapper(self, line):
         # Parse:
-        c = CrawlLogLine(line)
+        c = CrawlLogLine(line, job_name=self.crawl_job_name, log_filename=os.getenv('map_input_file', None))
 
         # Yield this line if there seems there is no key collision with the previous line:
         if self.last_c and c.ssurt == self.last_c.ssurt and c.timestamp == self.last_c.timestamp:

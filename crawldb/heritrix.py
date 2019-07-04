@@ -15,13 +15,18 @@ class CrawlLogLine(object):
     re_tries = re.compile('^\d+t$')
     re_dol = re.compile('^dol:\d+')  # Discarded out-links - make a total?
 
-    def __init__(self, line):
+    def __init__(self, line, job_name=None, job_launch=None, log_filename=None):
         """
         Parse from a standard log-line.
         :param line:
         """
         # Store the line for reference
         self.line = line
+        # Store the supplied metadata:
+        self.job_name = job_name
+        self.job_launch = job_launch
+        self.log_filename = log_filename
+
         # Split the line up:
         (self.timestamp, self.status_code, self.content_length, self.url, self.hop_path, self.via,
             self.mime, self.thread, self.start_time_plus_duration, self.hash, self.source,
@@ -92,7 +97,7 @@ class CrawlLogLine(object):
         """
         return self.stats
 
-    upsert_sql = """UPSERT INTO crawl_log (ssurt, timestamp, url, host, domain, content_type, content_length, content_digest, via, hop_path, status_code, ip ) VALUES %s"""
+    upsert_sql = """UPSERT INTO crawl_log (ssurt, timestamp, url, host, domain, content_type, content_length, content_digest, via, hop_path, status_code, ip, job_name, job_launch, log_filename ) VALUES %s"""
 
     def upsert_values(self):
-        return (self.ssurt, self.timestamp, self.url, self.host, self.domain, self.mime, self.content_length, self.hash, self.via, self.hop_path, self.status_code, self.ip)
+        return (self.ssurt, self.timestamp, self.url, self.host, self.domain, self.mime, self.content_length, self.hash, self.via, self.hop_path, self.status_code, self.ip, self.job_name, self.job_launch, self.log_filename)
