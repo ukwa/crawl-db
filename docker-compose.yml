@@ -18,3 +18,21 @@ services:
       - ./db:/db
     restart: on-failure
 
+  dbmate-prod:
+    image: amacneil/dbmate
+    command: "echo To be run manually."
+    environment:
+      - "DATABASE_URL=postgres://root@192.168.45.21:26257/crawl_db?sslmode=disable"
+    volumes:
+      - ./db:/db
+    restart: never
+
+  dbmate-postgres:
+    image: amacneil/dbmate
+    command: "echo To be run manually."
+    environment:
+      - "DATABASE_URL=postgres://crawl-db:crawl-db@192.168.45.21:5432/crawl_db?sslmode=disable"
+    volumes:
+      - ./db:/db
+    restart: never
+
