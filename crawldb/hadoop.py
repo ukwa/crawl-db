@@ -94,6 +94,7 @@ class SendLogFileToCrawlDB(luigi.contrib.hadoop.JobTask):
 
     def init_mapper(self):
         # Set up DB connection...
+        logger.info("Getting DB connection...")
         self.conn = psycopg2.connect(
             database=self.cdb_db,
             user=self.cdb_user,
@@ -103,9 +104,11 @@ class SendLogFileToCrawlDB(luigi.contrib.hadoop.JobTask):
             host=self.cdb_host,
         )
         # Make each statement commit immediately.
+        logger.info("Configuring DB connection...")
         self.conn.set_session(autocommit=True)
 
         # Open a cursor to perform database operations.
+        logger.info("Getting DB cursor...")
         self.cur = self.conn.cursor()
 
     def run_mapper(self, stdin=sys.stdin, stdout=sys.stdout):
@@ -114,8 +117,10 @@ class SendLogFileToCrawlDB(luigi.contrib.hadoop.JobTask):
 
         UKWA: In this case, we modify the mapper behaviour to make efficient, batched SQL inserts possible.
         """
+        logger.warning("Initialising...")
         self.init_hadoop()
         self.init_mapper()
+        logger.warning("Initialised. Now launching to execute_values...")
         execute_values(
             self.cur,
             CrawlLogLine.upsert_sql,
@@ -127,6 +132,7 @@ class SendLogFileToCrawlDB(luigi.contrib.hadoop.JobTask):
         counter = 0
         for result in self._map_input((line[:-1] for line in stdin)):
             if counter%1000 == 0:
+                logger.warning( "Processed %i lines" % counter )
                 outputs = [("STATUS", "Processed %i lines" % counter)]
                 if self.reducer == NotImplemented:
                     self.writer(outputs, stdout)
