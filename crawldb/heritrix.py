@@ -20,6 +20,9 @@ class CrawlLogLine(object):
         Parse from a standard log-line.
         :param line:
         """
+        # Store the line for reference
+        self.line = line
+        # Split the line up:
         (self.timestamp, self.status_code, self.content_length, self.url, self.hop_path, self.via,
             self.mime, self.thread, self.start_time_plus_duration, self.hash, self.source,
             self.annotation_string) = re.split(" +", line.strip(), maxsplit=11)
@@ -89,7 +92,7 @@ class CrawlLogLine(object):
         """
         return self.stats
 
-    upsert_sql = """UPSERT INTO crawl_log (ssurt, timestamp, url, host, domain, content_type, content_length, content_digest, via, hop_path, status_code, ip ) VALUES %s"""
+    upsert_sql = """UPSERT INTO crawl_log (ssurt, timestamp, event_id, url, host, domain, content_type, content_length, content_digest, via, hop_path, status_code, ip ) VALUES %s"""
 
-    def upsert_values(self):
-        return (self.ssurt, self.timestamp, self.url, self.host, self.domain, self.mime, self.content_length, self.hash, self.via, self.hop_path, self.status_code, self.ip)
+    def upsert_values(self, event_id):
+        return (self.ssurt, self.timestamp, event_id, self.url, self.host, self.domain, self.mime, self.content_length, self.hash, self.via, self.hop_path, self.status_code, self.ip)
