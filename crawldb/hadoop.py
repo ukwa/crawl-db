@@ -135,11 +135,11 @@ class SendLogFileToCrawlDB(luigi.contrib.hadoop.JobTask):
 
         # Yield this line if there seems there is no key collision with the previous line:
         if self.last_c and c.ssurt == self.last_c.ssurt and c.timestamp == self.last_c.timestamp:
-            logger.warning("Skipping line %i because the last line appears to collide with this one.")
+            logger.warning("Skipping line %i because the last line appears to collide with this one." % self.line_counter)
             logger.warning("Prev line %s" % self.last_c.line)
             logger.warning("Curr line %s" % c.line)
         else:
-            yield c.upsert_values(self.line_counter)
+            yield c.upsert_values()
 
         # Remember this line as the last line:
         self.last_c = c
