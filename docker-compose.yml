@@ -1,38 +1,16 @@
-version: '2'
+
+version: '3.7'
 
 services:
-
-  crdb:
-    image: cockroachdb/cockroach:v19.1.1
-    command: start --insecure
+  solrcloud:
+    image: solr:8.7
+    entrypoint:
+      - bash
+      - "-c"
+      - "init-var-solr; exec solr -f -cloud"
+    user: "${CURRENT_UID}"
+    volumes:
+     - "./cores:/var/solr"
     ports:
-      - "8080:8080"
-      - "26257:26257"
-
-  dbmate:
-    image: amacneil/dbmate
-    command: up
-    environment:
-      - "DATABASE_URL=postgres://root@crdb:26257/crawl_db?sslmode=disable"
-    volumes:
-      - ./db:/db
-    restart: on-failure
-
-  dbmate-prod:
-    image: amacneil/dbmate
-    command: "echo To be run manually."
-    environment:
-      - "DATABASE_URL=postgres://root@192.168.45.21:26257/crawl_db?sslmode=disable"
-    volumes:
-      - ./db:/db
-    restart: never
-
-  dbmate-postgres:
-    image: amacneil/dbmate
-    command: "echo To be run manually."
-    environment:
-      - "DATABASE_URL=postgres://crawl-db:crawl-db@192.168.45.21:5432/crawl_db?sslmode=disable"
-    volumes:
-      - ./db:/db
-    restart: never
+     - "8913:8983"
 

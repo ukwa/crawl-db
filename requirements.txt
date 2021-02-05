@@ -1,17 +1,18 @@
-certifi==2019.3.9
-chardet==3.0.4
-crawldb===aa81778
-docutils==0.14
-idna==2.8
-lockfile==0.12.2
-luigi==2.8.6
-psycopg2-binary==2.8.2
-python-daemon==2.1.2
-python-dateutil==2.8.0
-requests==2.22.0
-requests-file==1.4.3
-six==1.12.0
-tldextract==2.2.1
-tornado==4.5.3
-urlcanon==0.3.0
-urllib3==1.25.3
+certifi==2020.12.5
+chardet==4.0.0
+crawlstreams @ git+https://github.com/ukwa/crawl-streams.git@a5c9627272e947141987d233f32fc446d560c70d
+filelock==3.0.12
+idna==2.10
+kafka-python==1.4.7
+kevals @ git+https://github.com/ukwa/kevals.git@e6203ea850c854983f5f1dc72580fcb1d4435a94
+mmh3==2.5.1
+mrjob==0.7.4
+psycopg2-binary==2.8.6
+python-snappy==0.5.4
+PyYAML==5.4.1
+requests==2.25.1
+requests-file==1.5.1
+six==1.15.0
+tldextract==3.1.0
+urlcanon==0.3.1
+urllib3==1.26.2

@@ -1,9 +1,11 @@
 import re
+import json
 import urlcanon
+import datetime
 import tldextract
 
 # Use a TLD extractor that down not download a new suffix list (uses embedded one)
-custom_cache_extract = tldextract.TLDExtract(cache_file='_tld_extract_cache')
+custom_cache_extract = tldextract.TLDExtract(cache_dir=False)
 
 
 class CrawlLogLine(object):
@@ -86,6 +88,41 @@ class CrawlLogLine(object):
             # Only emit lines with annotations:
             if annot != "-":
                 self.stats["%s%s" % (prefix, annot)] = ""
+
+        # Try to parse the extra JSON
+        if self.extra_json:
+            self.extra_json = json.loads(self.extra_json)
+
+    def to_dict(self):
+        d = { 
+            'id': '%s/%s' % (self.timestamp, self.url),
+            'url': self.url,
+            'host': self.host,
+            'timestamp': self.timestamp,
+            'status_code': self.status_code,
+            'content_type': self.mime,
+            'content_length': self.content_length,
+            'hop_path': self.hop,
+            'annotations': self.annotations,
+            'content_digest': self.hash,
+            'via': self.via,
+            'start_time_plus_duration': self.start_time_plus_duration,
+            'seed': self.source
+        }
+        if '+' in self.start_time_plus_duration:
+            st, dur = self.start_time_plus_duration.split('+')
+            stdt = datetime.datetime.strptime(st, '%Y%m%d%H%M%S%f') 
+            d['start_time'] = '%sZ' % stdt.isoformat()
+            d['duration'] = dur
+
+        if 'warcFilename' in self.extra_json:
+            d['warc_type'] = 'response'
+            d['warc_filename'] = self.extra_json['warcFilename']
+            d['warc_offset'] = self.extra_json['warcFileOffset']
+            d['warc_length'] = self.extra_json['warcFileRecordLength']
+        if 'contentSize' in self.extra_json:
+            d['wire_bytes'] = self.extra_json['contentSize']
+        return d
 
 
     def stats(self):
