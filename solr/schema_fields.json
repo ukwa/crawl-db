@@ -1,11 +1,14 @@
 {
-  "add-field":{ "name":"timestamp",                "type":"pdate",  "stored":true, "docValues":true },
+  "add-field":{ "name":"log_timestamp",            "type":"pdate",  "stored":true, "docValues":true },
   "add-field":{ "name":"url",                      "type":"string", "stored":true, "docValues":true },
+  "add-field":{ "name":"url_canon",                "type":"string", "stored":true, "docValues":true },
   "add-field":{ "name":"via",                      "type":"string", "stored":true, "docValues":true },
-  "add-field":{ "name":"seed",                     "type":"string", "stored":true, "docValues":true },
+  "add-field":{ "name":"source"                    "type":"string", "stored":true, "docValues":true },
+  "add-field":{ "name":"crawler",                  "type":"string", "stored":true, "docValues":true },
   "add-field":{ "name":"crawl_name",               "type":"string", "stored":true, "docValues":true },
   "add-field":{ "name":"hop_path",                 "type":"string", "stored":true, "docValues":true },
   "add-field":{ "name":"thread",                   "type":"string", "stored":true, "docValues":true },
+  "add-field":{ "name":"ip",                       "type":"string", "stored":true, "docValues":true },
   "add-field":{ "name":"host",                     "type":"string", "stored":true, "docValues":true },
   "add-field":{ "name":"http_method",              "type":"string", "stored":true, "docValues":true },
   "add-field":{ "name":"status_code",              "type":"plong",  "stored":true, "docValues":true },
@@ -24,6 +27,8 @@
   "add-field":{ "name":"warc_content_type",        "type":"string", "stored":true, "docValues":true },
   "add-field":{ "name":"warc_type",                "type":"string", "stored":true, "docValues":true },
   "add-field":{ "name":"warc_id",                  "type":"string", "stored":true, "docValues":true },
-  "add-field":{ "name":"annotations",              "type":"string", "stored":true, "docValues":true, "multiValued":true },
-  "add-field":{ "name":"extra_info",               "type":"string", "stored":true, "docValues":true, "multiValued": true }
+  "add-field":{ "name":"dol",                      "type":"plong",  "stored":true, "docValues":true },
+  "add-field":{ "name":"launch_timestamp",         "type":"pdate",  "stored":true, "docValues":true },
+  "add-field":{ "name":"annotations",              "type":"delimited_payloads_string", "stored":true, "docValues":false },
+  "add-field":{ "name":"extra_info",               "type":"text_general", "stored":true }
 }

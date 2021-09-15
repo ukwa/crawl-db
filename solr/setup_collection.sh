@@ -7,6 +7,9 @@ ALIAS=crawl_log_fc
 echo "Create collection..."
 curl "${SOLR_URL}/admin/collections?action=CREATE&name=${COLLECTION}&numShards=1&replicationFactor=1"
 
+echo "Switch off data-driven schema mode..."
+curl "${SOLR_URL}/${COLLECTION}/config" -d '{"set-user-property": {"update.autoCreateFields":false}}'
+
 
 echo "Add fields..."
 curl -X POST -H 'Content-type:application/json' --data-binary @schema_fields.json http://localhost:8913/solr/${COLLECTION}/schema
