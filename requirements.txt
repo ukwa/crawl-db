@@ -1,4 +1,4 @@
-certifi==2020.12.5
+certifi==2022.12.7
 chardet==4.0.0
 crawlstreams @ git+https://github.com/ukwa/crawl-streams.git@a5c9627272e947141987d233f32fc446d560c70d
 filelock==3.0.12
