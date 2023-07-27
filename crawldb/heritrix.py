@@ -45,8 +45,13 @@ class CrawlLogLine(object):
         # Clean up:
         if self.content_length == "-":
             self.content_length = None
+        else:
+            self.content_length = int(self.content_length)
+        if self.status_code:
+            self.status_code = int(self.status_code)
 
         # Parse URL:
+        # FIXME Deal with dns:hostnmae URLs properly!
         parsed_url = urlcanon.parse_url(self.url)
         # Canonicalise
         urlcanon.whatwg(parsed_url)
@@ -79,12 +84,10 @@ class CrawlLogLine(object):
         for annot in self.annotations:
             # Set a prefix based on what it is:
             prefix = ''
-            if self.re_tries.match(annot):
-                prefix = 'tries:'
-                self.tries = annot
-            elif self.re_ip.match(annot):
-                prefix = "ip:"
-                self.ip = annot
+            if annot.startswith('tries:'):
+                self.tries = int(annot[6:])
+            elif annot.startswith('ip:'):
+                self.ip = annot[3:]
             # Only emit lines with annotations:
             if annot != "-":
                 self.stats["%s%s" % (prefix, annot)] = ""
@@ -98,6 +101,8 @@ class CrawlLogLine(object):
             'id': '%s/%s' % (self.timestamp, self.url),
             'url': self.url,
             'host': self.host,
+            'domain': self.domain,
+            'ip': self.ip,
             'timestamp': self.timestamp,
             'status_code': self.status_code,
             'content_type': self.mime,
@@ -112,16 +117,29 @@ class CrawlLogLine(object):
         if '+' in self.start_time_plus_duration:
             st, dur = self.start_time_plus_duration.split('+')
             stdt = datetime.datetime.strptime(st, '%Y%m%d%H%M%S%f') 
-            d['start_time'] = '%sZ' % stdt.isoformat()
-            d['duration'] = dur
+            #d['start_time'] = '%sZ' % stdt.isoformat()
+            d['start_time'] = stdt
+            d['duration'] = int(dur)
+        else:
+            d['start_time'] = None
+            d['duration'] = None
 
         if 'warcFilename' in self.extra_json:
             d['warc_type'] = 'response'
             d['warc_filename'] = self.extra_json['warcFilename']
             d['warc_offset'] = self.extra_json['warcFileOffset']
-            d['warc_length'] = self.extra_json['warcFileRecordLength']
+            d['warc_length'] = self.extra_json.get('warcFileRecordLength', None) # TODO How can this every be unset?
+        else:
+            d['warc_type'] = None
+            d['warc_filename'] = None
+            d['warc_offset'] = None
+            d['warc_length'] = None
+
         if 'contentSize' in self.extra_json:
             d['wire_bytes'] = self.extra_json['contentSize']
+        else:
+            d['wire_bytes'] = None
+
         return d
 
 
