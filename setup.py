@@ -6,9 +6,9 @@ with open('requirements.txt') as f:
 
 def get_version():
     try:
-        return subprocess.check_output(['git', 'describe', '--tags', '--always']).strip().decode("utf-8")
+        return subprocess.check_output(['git', 'describe', '--tags', '--exact-match']).strip().decode("utf-8")
     except:
-        return "?.?.?"
+        return "0.0.0dev0"
 
 setup(
     name='crawldb',
