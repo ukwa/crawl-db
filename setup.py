@@ -21,7 +21,7 @@ setup(
     zip_safe = False, # Avoid installing as .egg file, as Luigi can't handle these.
     entry_points={
         'console_scripts': [
-            'crawldb=crawldb.solr.cli:main'
+            'crawldb=crawldb.parquet.cli:main'
         ]
     }
 )
