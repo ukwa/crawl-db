@@ -1,3 +1,4 @@
+import os
 import sys
 import requests
 import logging
@@ -28,6 +29,9 @@ def add_chunk(data: dict, outfile, append=True):
         if key in ['warc_offset', 'warc_length', 'wire_bytes', 'duration', 'content_length', 'status_code']:
             columns[key] = 'Int64'
     df = pd.DataFrame(data).astype(columns)
+    # Don't append if there's no file yet:
+    if not os.path.isfile(outfile):
+        append=False
     write(outfile, df, append=append, compression='GZIP')
     #print(df.dtypes)
     #sys.exit(0)
@@ -64,8 +68,9 @@ def main(argv=None):
 
     # Import
     import_parser = subparsers.add_parser("import")
-    import_parser.add_argument('filename', metavar='filename', help="Crawl log file to process")
-    import_parser.add_argument('output', metavar='output', help="Parquet file to create")
+    import_parser.add_argument('--chunk-size', type=int, default=100_000, help="number of records to put into each chunk appended to the output file (default: %(default)s)")
+    import_parser.add_argument('filename', metavar='filename', help="crawl log file to process")
+    import_parser.add_argument('output', metavar='output', help="parquet file to create")
 
     # Parse up:
     args = parser.parse_args()
