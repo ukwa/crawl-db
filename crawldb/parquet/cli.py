@@ -22,13 +22,13 @@ logging.root.setLevel(logging.WARNING)
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
-def add_chunk(data: dict, append=True):
+def add_chunk(data: dict, outfile, append=True):
     columns = {}
     for key in data:
         if key in ['warc_offset', 'warc_length', 'wire_bytes', 'duration', 'content_length', 'status_code']:
             columns[key] = 'Int64'
     df = pd.DataFrame(data).astype(columns)
-    write('outfile.parquet', df, append=append, compression='GZIP')
+    write(outfile, df, append=append, compression='GZIP')
     #print(df.dtypes)
     #sys.exit(0)
 
@@ -55,7 +55,7 @@ def import_crawl_log(args, chunk_size=100_000):
                     append = True
                 #break
         if len(chunk) > 0:
-            add_chunk(chunk)
+            add_chunk(chunk, args.output)
 
 
 def main(argv=None):
@@ -65,6 +65,7 @@ def main(argv=None):
     # Import
     import_parser = subparsers.add_parser("import")
     import_parser.add_argument('filename', metavar='filename', help="Crawl log file to process")
+    import_parser.add_argument('output', metavar='output', help="Parquet file to create")
 
     # Parse up:
     args = parser.parse_args()
