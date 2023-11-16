@@ -7,6 +7,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         git \
 	&& rm -rf /var/lib/apt/lists/*
 
+# Make sure pip is up to date:
+RUN pip install -I pip
+
 WORKDIR /usr/src/access
 
 COPY requirements.txt ./
