@@ -1,4 +1,4 @@
-name: Build, scan and push to Docker Hub
+name: Build, run checks, and push to Docker Hub
 
 on:
   push:
