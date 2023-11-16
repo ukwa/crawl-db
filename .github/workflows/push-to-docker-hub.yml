@@ -4,8 +4,6 @@ on:
   push:
     tags:
       - '*'
-    branches:
-      - '*'
 
 jobs:
   run_docker_build_workflow:
