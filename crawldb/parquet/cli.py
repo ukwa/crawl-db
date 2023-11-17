@@ -29,9 +29,6 @@ def add_chunk(data: dict, outfile, append=True):
         if key in ['warc_offset', 'warc_length', 'wire_bytes', 'duration', 'content_length', 'status_code']:
             columns[key] = 'Int64'
     df = pd.DataFrame(data).astype(columns)
-    # Don't append if there's no file yet:
-    if not os.path.isfile(outfile):
-        append=False
     write(outfile, df, append=append, compression='GZIP')
     #print(df.dtypes)
     #sys.exit(0)
@@ -44,7 +41,11 @@ def import_crawl_log(args, chunk_size=100_000):
         chunk = {}
         append = False
         for line in f:
-            c = CrawlLogLine(line)
+            try:
+                c = CrawlLogLine(line)
+            except Exception as e:
+                logger.error(f"Could not parse line: {line}")
+                raise e
             c_dict = c.to_dict()
             for key in c_dict:
                 values = chunk.get(key, [])
@@ -52,9 +53,9 @@ def import_crawl_log(args, chunk_size=100_000):
                 chunk[key] = values
             count += 1
             if count%chunk_size == 0:
-                add_chunk(chunk, append)
+                add_chunk(chunk, args.output, append)
                 chunk = {}
-                logger.info(f"Done {count:,}...")
+                logger.info(f"Written {count:,} records...")
                 if not append:
                     append = True
                 #break
@@ -68,7 +69,8 @@ def main(argv=None):
 
     # Import
     import_parser = subparsers.add_parser("import")
-    import_parser.add_argument('--chunk-size', type=int, default=100_000, help="number of records to put into each chunk appended to the output file (default: %(default)s)")
+    default_chunk_size = 100_000
+    import_parser.add_argument('--chunk-size', type=int, default=default_chunk_size, help=f"number of records to put into each chunk appended to the output file (default: {default_chunk_size:,})")
     import_parser.add_argument('filename', metavar='filename', help="crawl log file to process")
     import_parser.add_argument('output', metavar='output', help="parquet file to create")
 

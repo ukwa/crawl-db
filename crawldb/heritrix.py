@@ -36,6 +36,7 @@ class CrawlLogLine(object):
         # Account for any JSON 'extra info' ending, strip or split:
         if self.annotation_string.endswith(' {}'):
             self.annotation_string = self.annotation_string[:-3]
+            self.extra_json = None
         elif ' {"' in self.annotation_string and self.annotation_string.endswith('}'):
             self.annotation_string, self.extra_json = re.split(re.escape(' {"'), self.annotation_string, maxsplit=1)
             self.extra_json = '{"%s' % self.extra_json
@@ -95,6 +96,8 @@ class CrawlLogLine(object):
         # Try to parse the extra JSON
         if self.extra_json:
             self.extra_json = json.loads(self.extra_json)
+        else:
+            self.extra_json = {}
 
     def to_dict(self):
         d = { 
