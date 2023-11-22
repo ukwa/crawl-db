@@ -50,25 +50,39 @@ class CrawlLogLine(object):
             self.content_length = int(self.content_length)
         if self.status_code:
             self.status_code = int(self.status_code)
+        if self.source == '-':
+            self.source = None
 
         # Parse URL:
-        # FIXME Deal with dns:hostnmae URLs properly!
+        # FIXME Deal with dns:hostname URLs properly!
         parsed_url = urlcanon.parse_url(self.url)
-        # Canonicalise
-        urlcanon.whatwg(parsed_url)
-
+        # Canonical form
+        self.url_whatwg = urlcanon.whatwg(parsed_url)
         # and results:
         self.ssurt = parsed_url.ssurt().decode('utf-8')
         self.host = parsed_url.host.decode('utf-8')
-        # Pull the registered domain:
-        ext = custom_cache_extract(self.host)
-        self.domain = ext.registered_domain
-        self.ip = None
-        self.tries = None
-        self.hop = ''
+        # Aggressively, canonicalised SURT:
+        url_aggr = urlcanon.aggressive(parsed_url)
+        self.surt = parsed_url.surt().decode('utf-8')
+
         # Host: DNS override
         if self.url.startswith("dns:"):
             self.host = self.url[4:]
+
+        # Pull the registered domain:
+        ext = custom_cache_extract(self.host)
+        self.domain = ext.registered_domain
+        self.public_suffix = ext.suffix
+
+        # Default values
+        self.ip = None
+        self.tries = 1
+        self.hop = ''
+        self.launch_timestamp = None
+        self.webrender_status_code = None
+
+        # Interpret the timestamp
+        self.timestamp_date =  datetime.datetime.strptime(self.timestamp, '%Y-%m-%dT%H:%M:%S.%fZ')
 
         # Stats block
         self.stats = {
@@ -82,16 +96,27 @@ class CrawlLogLine(object):
         }
 
         # Add in annotations:
+        to_keep = []
         for annot in self.annotations:
             # Set a prefix based on what it is:
             prefix = ''
-            if annot.startswith('tries:'):
-                self.tries = int(annot[6:])
+            if self.re_tries.match(annot):
+                self.tries = int(annot[:-1])
             elif annot.startswith('ip:'):
                 self.ip = annot[3:]
+            elif annot.startswith('launchTimestamp:'):
+                # launchTimestamp:20210903221019
+                self.launch_timestamp = datetime.datetime.strptime(annot, "launchTimestamp:%Y%m%d%H%M%S")
+            elif annot.startswith('WebRenderStatus:'):
+                # WebRenderStatus:200
+                self.webrender_status_code = int(annot[16:])
+            else:
+                to_keep.append(annot)
             # Only emit lines with annotations:
             if annot != "-":
                 self.stats["%s%s" % (prefix, annot)] = ""
+        # Avoid repeats, just keep the keepers:
+        self.annotations = to_keep
 
         # Try to parse the extra JSON
         if self.extra_json:
@@ -101,21 +126,26 @@ class CrawlLogLine(object):
 
     def to_dict(self):
         d = { 
-            'id': '%s/%s' % (self.timestamp, self.url),
+            'id': '%s %s' % (self.surt, self.timestamp),
             'url': self.url,
-            'host': self.host,
-            'domain': self.domain,
-            'ip': self.ip,
-            'timestamp': self.timestamp,
+            'url_hostname': self.host,
+            'url_domain': self.domain,
+            'url_public_suffix': self.public_suffix,
+            'surt': self.surt,
+            'ssurt': self.ssurt,
+            'timestamp': self.timestamp_date,
             'status_code': self.status_code,
             'content_type': self.mime,
             'content_length': self.content_length,
             'hop_path': self.hop,
-            'annotations': self.annotations,
             'content_digest': self.hash,
+            'ip': self.ip,
             'via': self.via,
-            'start_time_plus_duration': self.start_time_plus_duration,
-            'seed': self.source
+            'seed': self.source,
+            'tries': self.tries,
+            'launch_time': self.launch_timestamp,
+            'webrender_status_code': self.webrender_status_code,
+            'annotations': self.annotations,
         }
         if '+' in self.start_time_plus_duration:
             st, dur = self.start_time_plus_duration.split('+')

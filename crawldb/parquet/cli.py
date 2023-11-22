@@ -26,12 +26,15 @@ logger.setLevel(logging.INFO)
 def add_chunk(data: dict, outfile, append=True):
     columns = {}
     for key in data:
-        if key in ['warc_offset', 'warc_length', 'wire_bytes', 'duration', 'content_length', 'status_code']:
+        # Ensure numbers are treated as numbers:
+        if key in ['warc_offset', 'warc_length', 'wire_bytes', 'content_length']:
             columns[key] = 'Int64'
+        elif key in ['status_code', 'webrender_status_code', 'duration', 'tries']:
+            columns[key] = 'Int32'
+        elif key in ['seed']:
+            columns[key] = 'string'
     df = pd.DataFrame(data).astype(columns)
     write(outfile, df, append=append, compression='GZIP')
-    #print(df.dtypes)
-    #sys.exit(0)
 
 
 def import_crawl_log(args, chunk_size=100_000):
@@ -60,7 +63,7 @@ def import_crawl_log(args, chunk_size=100_000):
                     append = True
                 #break
         if len(chunk) > 0:
-            add_chunk(chunk, args.output)
+            add_chunk(chunk, args.output, append)
 
 
 def main(argv=None):
@@ -74,12 +77,20 @@ def main(argv=None):
     import_parser.add_argument('filename', metavar='filename', help="crawl log file to process")
     import_parser.add_argument('output', metavar='output', help="parquet file to create")
 
+    # Describe
+    import_parser = subparsers.add_parser("describe")
+    import_parser.add_argument('filename', metavar='filename', help="Parquet file to describe.")
+
     # Parse up:
     args = parser.parse_args()
 
     # Act:
     if args.command  == 'import':
         import_crawl_log(args)
+    if args.command == 'describe':
+        df = pd.read_parquet(args.filename)
+        print(df.dtypes)
+        print(df.head(6).to_json(orient='records', indent=2))
 
 
 if __name__ == "__main__":
