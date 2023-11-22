@@ -9,8 +9,6 @@ def run_print_and_save(query, csv_file):
     q.to_csv(csv_file)
 
 
-print(duckdb.query(f"DESCRIBE SELECT * FROM '{in_file}'").df())
-
 print(duckdb.query(f"SELECT COUNT(*) FROM '{in_file}'"))
 
 #print(duckdb.query(f"SELECT * FROM '{in_file}' ORDER BY id ASC LIMIT 1"))
@@ -19,6 +17,12 @@ print(duckdb.query(f"SELECT COUNT(*) FROM '{in_file}'"))
 # Scan for activity from a particular url_domain
 #run_print_and_save(f"SELECT * FROM '{in_file}' WHERE url_domain == 'bbc.co.uk' LIMIT 10", "some_rows.csv")
 run_print_and_save(f"SELECT * FROM '{in_file}' WHERE status_code == -5002 LIMIT 10", "some_rows.csv")
+
+#run_print_and_save(f"SELECT url, start_time, STRPTIME(COALESCE(NULLIF(REGEXP_EXTRACT(annotations, '.*launchTimestamp:([0-9]+).*',1),''),'20300101000000'),'%Y%m%d%H%M%S') AS launch_time, (start_time - launch_time) AS delay, REGEXP_EXTRACT(annotations, '.*WebRenderStatus:([0-9]+).*',1) AS webrender_status_code, annotations FROM '{in_file}' WHERE status_code == -5002 AND delay IS NOT NULL ORDER BY delay DESC LIMIT 100", "some_rows.csv")
+#print(duckdb.query(f"SELECT domain, status_code, COUNT(*) from '{in_file}' GROUP BY domain, status_code ORDER BY COUNT(*) DESC"))
+#print(duckdb.query(f"SELECT domain, status_code, content_type, SUM(content_length), COUNT(*) from '{in_file}' WHERE domain == 'bbc.co.uk' GROUP BY domain, status_code, content_type ORDER BY COUNT(*) DESC"))
+
+print(duckdb.query(f"DESCRIBE SELECT * FROM '{in_file}'").df())
 
 #run_print_and_save(f"SELECT url, start_time, STRPTIME(COALESCE(NULLIF(REGEXP_EXTRACT(annotations, '.*launchTimestamp:([0-9]+).*',1),''),'20300101000000'),'%Y%m%d%H%M%S') AS launch_time, (start_time - launch_time) AS delay, REGEXP_EXTRACT(annotations, '.*WebRenderStatus:([0-9]+).*',1) AS webrender_status_code, annotations FROM '{in_file}' WHERE status_code == -5002 AND delay IS NOT NULL ORDER BY delay DESC LIMIT 100", "some_rows.csv")
 run_print_and_save(f"SELECT url, tries, start_time, duration, launch_time, (start_time - launch_time) AS delay, webrender_status_code, annotations FROM '{in_file}' WHERE status_code == -5002 ORDER BY delay DESC LIMIT 100", "some_rows.csv")
