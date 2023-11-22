@@ -18,8 +18,10 @@ python -m crawldb.parquet.cli import  crawl.log.cp00004-20231116123457 crawl-log
 
 This took a while, about an hour, but created a queryable file only 2.8GB in size.
 
-Using the example queries (see `duckdb-query.py` for details), we could query this file very quickly, with even fairly intensive aggregation queries only requiring a second or so to run.
+Using the example queries (see `duckdb-query.py` for details), we could query this file very quickly, with even fairly intensive aggregation queries only requiring a second or so to run. Some simple examples are:
 
+
+### Total records
 
 ```
 SELECT COUNT(*) FROM 'crawl-log-cp00004.parquet';
@@ -33,7 +35,42 @@ SELECT COUNT(*) FROM 'crawl-log-cp00004.parquet';
 ```
 
 
- 
+### Breakdown by status codes
+
+```
+SELECT status_code, SUM(content_length) AS total_bytes, COUNT(*) AS total_records from 'crawl-log-cp00004.parquet' GROUP BY status_code ORDER BY COUNT(*) DESC;
+
+┌─────────────┬──────────────┬───────────────┐
+│ status_code │ total_bytes  │ total_records │
+│    int64    │    int128    │     int64     │
+├─────────────┼──────────────┼───────────────┤
+│       -5003 │         NULL │      30199915 │
+│         200 │ 561472969271 │       4868164 │
+│       -9998 │         NULL │        613207 │
+│         301 │    336555824 │        574581 │
+│         302 │    459076182 │        344545 │
+│         403 │    977360013 │        228733 │
+│         404 │   8837109684 │        193986 │
+│          -6 │         NULL │         87998 │
+│         307 │       668014 │         66263 │
+│         503 │    188275757 │         44856 │
+│          ·  │           ·  │             · │
+│          ·  │           ·  │             · │
+│          ·  │           ·  │             · │
+│         415 │          336 │             3 │
+│         421 │          513 │             3 │
+│         402 │        12790 │             2 │
+│         417 │            0 │             2 │
+│         299 │       314915 │             2 │
+│         203 │        14252 │             1 │
+│         524 │         7222 │             1 │
+│         999 │         1530 │             1 │
+│         408 │        12448 │             1 │
+│          -5 │         NULL │             1 │
+├─────────────┴──────────────┴───────────────┤
+│ 63 rows (20 shown)               3 columns │
+└────────────────────────────────────────────┘
+```
 
 
 ## Previous Designs
